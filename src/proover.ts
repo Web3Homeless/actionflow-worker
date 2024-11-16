@@ -3,7 +3,7 @@ interface statusResponse {
     status: boolean;
   }
 
-export const transactionProover = async (
+ const transactionProover = async (
     method: string,
     address: any,
     body: any
@@ -34,7 +34,7 @@ export const transactionProover = async (
     }
   }
 
-export const transferProover = async (
+ const transferProover = async (
     method: string,
     address: any,
     body: any
@@ -65,7 +65,7 @@ export const transferProover = async (
     }
 }
 
-export const twitterProover = async (
+const twitterProover = async (
     method: string,
     address: any,
     body: any

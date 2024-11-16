@@ -1,19 +1,8 @@
 import { MongoClient, ReturnDocument } from 'mongodb';
-import { getPool } from './pool';
 import * as dotenv from 'dotenv';
+import { ITrigger } from './types';
 
 dotenv.config();
-
-interface Trigger {
-  name: string;
-  address: string;
-  method: string;
-  url: string;
-  postData: string;
-  condition: string;
-  status: string;
-  keywords: string;
-}
 
 async function run(): Promise<void> {
   const MONGODB_URI = process.env.MONGODB_URI;
@@ -31,41 +20,51 @@ async function run(): Promise<void> {
   const collectionName = 'triggers';
 
   const database = client.db(dbName);
-  const collection = database.collection<Trigger>(collectionName);
+  const collection = database.collection<ITrigger>(collectionName);
 
   // For modular testing only
   if (NODE_ENV && NODE_ENV === 'development') {
-    const triggers: Trigger[] = [
-      {
-        name: 'twitter',
-        address: 'address',
-        method: 'method',
-        url: 'url',
-        postData: 'data',
-        condition: 'condition',
-        status: 'new',
-        keywords: 'keywords',
-      },
-      {
-        name: 'swap',
-        address: 'address',
-        method: 'method',
-        url: 'url',
-        postData: 'data',
-        condition: 'condition',
-        status: 'new',
-        keywords: 'keywords',
-      },
-      {
-        name: 'transfer',
-        address: 'address',
-        method: 'method',
-        url: 'url',
-        postData: 'data',
-        condition: 'condition',
-        status: 'new',
-        keywords: 'keywords',
-      },
+    const triggers: ITrigger[] = [
+        {
+            type: "transfer",
+            network: "ethereum",
+            contractAddress: "0x395A8bFE7dAb89ec5A1CE75Fd98F3DcfD3e4221F",
+            status: "new",
+          
+            transferData: {
+              token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+            },
+            swapData: undefined,
+            twitterCallData: undefined,
+        },
+        {
+            type: "twitter",
+            network: "arbitrum",
+            contractAddress: "0x7cf9957383d484A2a780aCcaEC3E0707E948b93e",
+            status: "new",
+          
+            transferData: undefined,
+            swapData: undefined,
+            twitterCallData: {
+              twitterHandle: "elonmusk",
+              searshWords: "dodge",
+            }
+        },
+        {
+            type: "swap",
+            network: "polygon",
+            contractAddress: "0x792de4298b705eC02D5ae69B22849330618a98C6",
+            status: "new",
+          
+            transferData: undefined,
+            swapData: {
+              target: "0x0895c52dADc167AeB8AD8ceB9A137480B9D6291d",
+              tokenIn: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+              tokenOut: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+              swapper: "1inch",
+            },
+            twitterCallData: undefined,
+          },
     ];
 
     try {
@@ -92,12 +91,12 @@ async function run(): Promise<void> {
       console.log('Trigger document:', JSON.stringify(trigger, null, 2));
 
       // Ensure the `name` field exists
-      if (!trigger.name) {
+      if (!trigger.type) {
         console.log('The `name` field is missing in this document. Skipping...');
         continue;
       }
 
-      console.log(`id: ${trigger._id} and name ${trigger.name} and status ${trigger.status}`);
+      console.log(`id: ${trigger._id} and name ${trigger.type} and status ${trigger.status}`);
 
 
       
@@ -144,15 +143,3 @@ async function run(): Promise<void> {
 }
 
 run().catch(console.dir);
-
-
-// Example usage
-(async () => {
-    const rpc = "";
-    const factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"; // Ethereum Uniswap V2 Factory
-    const token1 = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; // DAI
-    const token2 = "0xC02aaa39b223FE8D0A0E5C4F27eAD9083C756Cc2"; // WETH
-
-    const poolAddress = await getPool(rpc,factory,token1, token2);
-    console.log("Pool Address:", poolAddress);
-})();
