@@ -95,14 +95,49 @@ export const subscribeTo1Inch = async (data: ITrigger) => {
 
          //call vilayer
          const body = {}
-         proover.transferProover("uniswap",JSON.stringify(body));
+         proover.transferProover("1inch_swap",JSON.stringify(body));
     });
 
+}
+
+export const subscribeToTransaction = async (data: ITrigger) => {
+
+    // Setup provider and contract
+    // Setup provider (replace with your RPC URL)
+    const networkConfig = helper.networks.find((row) => row.network === data.network);
+    if (!networkConfig || !networkConfig.factoryAddress) {
+        throw new Error(`Invalid network: ${data.network}`);
+    }
+
+    const tokenAddress = data.transferData?.token;
+   
+    if (!tokenAddress) {
+        throw new Error(`Invalid tokenAddress: ${tokenAddress}`);
+    }
+
+    
+    const rpcUrl = networkConfig.rpc_url + process.env.rpc_key;
+    const provider = new JsonRpcProvider(rpcUrl);
+    const tokenContract = new ethers.Contract(tokenAddress, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
+
+    // Listen for Transfer events to your contract
+    const contractAddress = data.contractAddress;
+
+    tokenContract.on("Transfer", (from, to, value, event) => {
+    if (to.toLowerCase() === contractAddress.toLowerCase()) {
+        console.log(`Tokens received! From: ${from}, Amount: ${formatUnits(value)}`);
+        
+         //call vilayer
+         const body = {}
+         proover.transactionProover("transaction",JSON.stringify(body));
+    }
+    });
 }
 
 
 export const subscriber = {
     subscribeToUniSwap,
     subscribeTo1Inch,
+    subscribeToTransaction,
 
 }
