@@ -1,4 +1,5 @@
 import { MongoClient, ReturnDocument } from 'mongodb';
+import { getPool } from './pool';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -143,3 +144,15 @@ async function run(): Promise<void> {
 }
 
 run().catch(console.dir);
+
+
+// Example usage
+(async () => {
+    const rpc = "";
+    const factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"; // Ethereum Uniswap V2 Factory
+    const token1 = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; // DAI
+    const token2 = "0xC02aaa39b223FE8D0A0E5C4F27eAD9083C756Cc2"; // WETH
+
+    const poolAddress = await getPool(rpc,factory,token1, token2);
+    console.log("Pool Address:", poolAddress);
+})();
