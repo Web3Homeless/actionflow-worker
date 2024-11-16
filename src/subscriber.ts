@@ -2,7 +2,9 @@ import { ethers } from "ethers";
 import { ITrigger } from './types';
 import { helper } from './helper';
 import { proover } from './proover';
-import { JsonRpcProvider, Contract } from "ethers";
+import { JsonRpcProvider, Contract, formatUnits } from "ethers";
+import { json } from "stream/consumers";
+
 
 export const subscribeToUniSwap = async (data: ITrigger) => {
 
@@ -48,49 +50,59 @@ export const subscribeToUniSwap = async (data: ITrigger) => {
             console.log(`Amount Out: Token0: ${amount0Out}, Token1: ${amount1Out}`);
             console.log(`Recipient: ${to}`);
 
-            //call vilayer
-            proover.transferProover("uniswap",sender,"");
+             //call vilayer
+            const body = {}
+            proover.transferProover("uniswap",JSON.stringify(body));
         }   
     });
+}
+
+export const subscribeTo1Inch = async (data: ITrigger) => {
+
+    // Setup provider (replace with your RPC URL)
+     const networkConfig = helper.networks.find((row) => row.network === data.network);
+     if (!networkConfig || !networkConfig.factoryAddress) {
+         throw new Error(`Invalid network: ${data.network}`);
+     }
+ 
+     const rpcUrl = networkConfig.rpc_url + process.env.rpc_key;
+     const provider = new JsonRpcProvider(rpcUrl);
+
+    // 1inch Aggregation Router address
+    const routerAddress = "0x11111112542d85b3ef69ae05771c2dccff4faa26";
+    
+    // ABI with the Swapped event
+    const routerABI = [
+        "event Swapped(address indexed sender, address srcToken, address dstToken, address indexed dstReceiver, uint256 spentAmount, uint256 returnAmount)"
+    ];
+    
+    // Initialize contract
+    const routerContract = new ethers.Contract(routerAddress, routerABI, provider);
+    
+    // Your contract address
+    const contractAddress = data.contractAddress;
+    
+    // Listen for swaps involving your contract
+    routerContract.on("Swapped", (sender, srcToken, dstToken, dstReceiver, spentAmount, returnAmount, event) => {
+        if (sender.toLowerCase() === contractAddress.toLowerCase() || dstReceiver.toLowerCase() === contractAddress.toLowerCase()) {
+            console.log(`Swap detected!`);
+            console.log(`Sender: ${sender}`);
+            console.log(`Source Token: ${srcToken}`);
+            console.log(`Destination Token: ${dstToken}`);
+            console.log(`Spent Amount: ${formatUnits(spentAmount)}`);
+            console.log(`Received Amount: ${formatUnits(returnAmount)}`);
+        }
+
+         //call vilayer
+         const body = {}
+         proover.transferProover("uniswap",JSON.stringify(body));
+    });
+
 }
 
 
 export const subscriber = {
     subscribeToUniSwap,
+    subscribeTo1Inch,
+
 }
-/*
-
-1inch
-
-const { ethers } = require("ethers");
-
-// Setup provider (replace with your RPC URL)
-const provider = new ethers.providers.JsonRpcProvider("YOUR_RPC_URL");
-
-// 1inch Aggregation Router address
-const routerAddress = "0x11111112542d85b3ef69ae05771c2dccff4faa26";
-
-// ABI with the Swapped event
-const routerABI = [
-    "event Swapped(address indexed sender, address srcToken, address dstToken, address indexed dstReceiver, uint256 spentAmount, uint256 returnAmount)"
-];
-
-// Initialize contract
-const routerContract = new ethers.Contract(routerAddress, routerABI, provider);
-
-// Your contract address
-const contractAddress = "YOUR_CONTRACT_ADDRESS";
-
-// Listen for swaps involving your contract
-routerContract.on("Swapped", (sender, srcToken, dstToken, dstReceiver, spentAmount, returnAmount, event) => {
-    if (sender.toLowerCase() === contractAddress.toLowerCase() || dstReceiver.toLowerCase() === contractAddress.toLowerCase()) {
-        console.log(Swap detected!);
-        console.log(Sender: ${sender});
-        console.log(Source Token: ${srcToken});
-        console.log(Destination Token: ${dstToken});
-        console.log(Spent Amount: ${ethers.utils.formatUnits(spentAmount)});
-        console.log(Received Amount: ${ethers.utils.formatUnits(returnAmount)});
-    }
-});
-
-*/

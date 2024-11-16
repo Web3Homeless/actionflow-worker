@@ -5,14 +5,13 @@ interface statusResponse {
 
  const transactionProover = async (
     method: string,
-    address: any,
     body: any
   ): Promise<statusResponse | undefined> => {
 
     try{
         console.log("transactionProover body: ", body);
         const response = await fetch(
-            process.env.PROOVER_URI + method +"/" + address,
+            process.env.PROOVER_URI + method,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -36,14 +35,13 @@ interface statusResponse {
 
  const transferProover = async (
     method: string,
-    address: any,
     body: any
     ): Promise<statusResponse | undefined> => {
 
     try{
-        console.log("transactionProover body: ", body);
+        console.log("transferProover body: ", body);
         const response = await fetch(
-            process.env.PROOVER_URI + method +"/" + address,
+            process.env.PROOVER_URI + method,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -52,29 +50,28 @@ interface statusResponse {
         );
 
         const data: statusResponse = await response.json();
-        console.log("transactionProover response: ", response);
+        console.log("transferProover response: ", response);
 
         if (!response.ok) {
-        throw new Error("Failed to post transactionProover");
+        throw new Error("Failed to post transferProover");
         }
         console.log(data);
         return data;
     } catch (error) {
-        console.error("Error getting transactionProover:", error);
+        console.error("Error getting transferProover:", error);
         return undefined;
     }
 }
 
 const twitterProover = async (
     method: string,
-    address: any,
     body: any
     ): Promise<statusResponse | undefined> => {
 
     try{
-        console.log("transactionProover body: ", body);
+        console.log("twitterProover body: ", body);
         const response = await fetch(
-            process.env.PROOVER_URI + method +"/" + address,
+            process.env.PROOVER_URI + method,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -83,15 +80,15 @@ const twitterProover = async (
         );
 
         const data: statusResponse = await response.json();
-        console.log("transactionProover response: ", response);
+        console.log("twitterProover response: ", response);
 
         if (!response.ok) {
-        throw new Error("Failed to post transactionProover");
+        throw new Error("Failed to post twitterProover");
         }
         console.log(data);
         return data;
     } catch (error) {
-        console.error("Error getting transactionProover:", error);
+        console.error("Error getting twitterProover:", error);
         return undefined;
     }
 }
