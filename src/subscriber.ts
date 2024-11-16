@@ -134,10 +134,19 @@ export const subscribeToTransaction = async (data: ITrigger) => {
     });
 }
 
+export const subscribeToTwitter = async (data: ITrigger) => {
+
+    if ( 1 == 1 ) {
+
+         //call vilayer
+         const body = {}
+         proover.transactionProover("twitter",JSON.stringify(body));
+    }
+}
 
 export const subscriber = {
     subscribeToUniSwap,
     subscribeTo1Inch,
     subscribeToTransaction,
-
+    subscribeToTwitter,
 }
