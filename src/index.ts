@@ -1,6 +1,7 @@
 import { MongoClient, ReturnDocument } from 'mongodb';
 import * as dotenv from 'dotenv';
 import { ITrigger } from './types';
+import { subscriber } from './subscriber';
 
 dotenv.config();
 
@@ -99,8 +100,25 @@ async function run(): Promise<void> {
       console.log(`id: ${trigger._id} and name ${trigger.type} and status ${trigger.status}`);
 
 
-      
+      switch(trigger.type){
+        case "transfer":
+          subscriber.subscribeToTransaction(trigger);
+          break;
+        case "twitter":
+          subscriber.subscribeToTwitter(trigger);
+          break;
+        case "swap":
+          switch(trigger.swapData?.swapper){
+              case "1inch":
+                subscriber.subscribeTo1Inch(trigger);
+                break;
+              default:
+                subscriber.subscribeToUniSwap(trigger);
+          };
+          break;
 
+      }
+      
       const findOneQuery = { _id: trigger._id };
       const updateDoc = { $set: { status: 'success' } };
       const updateOptions = { returnDocument: ReturnDocument.AFTER }; // Use enum for "after"
