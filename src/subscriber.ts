@@ -143,10 +143,29 @@ export const subscribeToTransaction = async (data: ITrigger): Promise<string> =>
 
 export const subscribeToTwitter = async (data: ITrigger) => {
 
-    if ( 1 == 1 ) {
+    const callAPI = async () => {
+        try {
+            console.log("api:TWITTER ", process.env.TWITTER_URL);
+            const response = await fetch(`${process.env.TWITTER_URL}`, {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer "+process.env.TWITTER_KEY,
+            },
+            });
+        
+            const data = await response.json();
 
-         return  "";
+            if (!response.ok) {
+            throw new Error("Failed to get TWITTER");
+            }
+            return data;
+        } catch (error) {
+            console.error("Error getting TWITTER:", error);
+            return "";
+        }
     }
+
+    return await callAPI();
 }
 
 export const subscriber = {
