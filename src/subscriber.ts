@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 import { ITrigger } from './types';
 import { helper } from './helper';
-import { proover } from './proover';
 import { JsonRpcProvider, Contract, formatUnits } from "ethers";
 import { json } from "stream/consumers";
 import * as dotenv from 'dotenv';
