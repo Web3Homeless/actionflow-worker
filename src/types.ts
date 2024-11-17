@@ -19,6 +19,7 @@ export interface ITrigger {
     network: string;
     contractAddress: string;
     status: string;
+    hash:string;
 
     transferData: ITranfserData | undefined;
     swapData: ISwapData | undefined;

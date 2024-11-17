@@ -28,12 +28,13 @@ async function run(): Promise<void> {
     const triggers: ITrigger[] = [
         {
             type: "transfer",
-            network: "ethereum",
-            contractAddress: "0x395A8bFE7dAb89ec5A1CE75Fd98F3DcfD3e4221F",
+            network: "op_sopolia",
+            contractAddress: "0xb8A5f87a91a2D8Db0e778d42653280E3F9FA7cAC",
             status: "new",
+            hash: "",
           
             transferData: {
-              token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+              token: "0x58d7f482ffd7bcd784a9c36d91a3a6010f096b73"
             },
             swapData: undefined,
             twitterCallData: undefined,
@@ -43,6 +44,7 @@ async function run(): Promise<void> {
             network: "arbitrum",
             contractAddress: "0x7cf9957383d484A2a780aCcaEC3E0707E948b93e",
             status: "new",
+            hash: "",
           
             transferData: undefined,
             swapData: undefined,
@@ -56,7 +58,8 @@ async function run(): Promise<void> {
             network: "polygon",
             contractAddress: "0x792de4298b705eC02D5ae69B22849330618a98C6",
             status: "new",
-          
+            hash: "",
+
             transferData: undefined,
             swapData: {
               target: "0x0895c52dADc167AeB8AD8ceB9A137480B9D6291d",
@@ -78,11 +81,11 @@ async function run(): Promise<void> {
 
   try {
     // Find all documents in the "triggers" collection and sort them
-    const cursor = await collection.find({}).sort({ name: 1 });
+    const cursor = await collection.find({ status: "new" }).sort({ name: 1 });
 
     while (await cursor.hasNext()) {
       const trigger = await cursor.next();
-
+      let transactionHash = null;
       if (!trigger) {
         console.log('Empty document returned by cursor.');
         continue;
@@ -99,47 +102,51 @@ async function run(): Promise<void> {
 
       console.log(`id: ${trigger._id} and name ${trigger.type} and status ${trigger.status}`);
 
-
       switch(trigger.type){
         case "transfer":
-          subscriber.subscribeToTransaction(trigger);
+          transactionHash =  await subscriber.subscribeToTransaction(trigger);
           break;
         case "twitter":
-          subscriber.subscribeToTwitter(trigger);
+          transactionHash = await subscriber.subscribeToTwitter(trigger);
           break;
         case "swap":
           switch(trigger.swapData?.swapper){
               case "1inch":
-                subscriber.subscribeTo1Inch(trigger);
+                transactionHash = await subscriber.subscribeTo1Inch(trigger);
                 break;
               default:
-                subscriber.subscribeToUniSwap(trigger);
+                transactionHash = await subscriber.subscribeToUniSwap(trigger);
           };
           break;
 
       }
+
+      console.log(`transactionHash: ${transactionHash}`);
       
-      const findOneQuery = { _id: trigger._id };
-      const updateDoc = { $set: { status: 'success' } };
-      const updateOptions = { returnDocument: ReturnDocument.AFTER }; // Use enum for "after"
+      if (typeof transactionHash === "string" && transactionHash.length > 0) {
 
-      try {
-        // Update the document
-        const updateResult = await collection.findOneAndUpdate(
-          findOneQuery,
-          updateDoc,
-          updateOptions
-        );
+        const findOneQuery = { _id: trigger._id };
+        const updateDoc = { $set: { status: 'success', hash: transactionHash} };
+        const updateOptions = { returnDocument: ReturnDocument.AFTER }; // Use enum for "after"
 
-        console.log(updateResult);
+        try {
+          // Update the document
+          const updateResult = await collection.findOneAndUpdate(
+            findOneQuery,
+            updateDoc,
+            updateOptions
+          );
 
-        if (updateResult) {
-          console.log(`Here is the updated document:\n${JSON.stringify(updateResult)}`);
-        } else {
-          console.log(`No document found matching: ${JSON.stringify(findOneQuery)}`);
+          //console.log(updateResult);
+
+          if (updateResult) {
+            console.log(`Here is the updated document:\n${JSON.stringify(updateResult)}`);
+          } else {
+            console.log(`No document found matching: ${JSON.stringify(findOneQuery)}`);
+          }
+        } catch (err) {
+          console.error(`Something went wrong trying to update one document: ${err}`);
         }
-      } catch (err) {
-        console.error(`Something went wrong trying to update one document: ${err}`);
       }
     }
   } catch (err) {

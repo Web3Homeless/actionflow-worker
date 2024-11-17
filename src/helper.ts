@@ -16,9 +16,15 @@ const networks = [
     },
     {
         network: "arbitrum",
-        factoryAddress: "",
-        rpc_url: process.env.ARB_RPC_URL ?? "0xc35DADB65012eC5796536bD9864eD8773aBc74C4",
+        factoryAddress: "0xc35DADB65012eC5796536bD9864eD8773aBc74C4",
+        rpc_url: process.env.ARB_RPC_URL ?? "",
     },
+    {
+        network: "op_sopolia",
+        factoryAddress: "",
+        rpc_url:process.env.OPS_RPC_URL?? "",
+    }
+
 ];
 
 const getPair = async (network: string, token1: string, token2: string) => {

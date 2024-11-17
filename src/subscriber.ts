@@ -4,7 +4,10 @@ import { helper } from './helper';
 import { proover } from './proover';
 import { JsonRpcProvider, Contract, formatUnits } from "ethers";
 import { json } from "stream/consumers";
+import * as dotenv from 'dotenv';
 
+dotenv.config();
+const rpc_url = process.env.RPC_KEY == undefined ? "" : process.env.RPC_KEY;
 
 export const subscribeToUniSwap = async (data: ITrigger) => {
 
@@ -30,7 +33,7 @@ export const subscribeToUniSwap = async (data: ITrigger) => {
          throw new Error(`Invalid network: ${data.network}`);
      }
  
-     const rpcUrl = networkConfig.rpc_url + process.env.rpc_key;
+     const rpcUrl = networkConfig.rpc_url + rpc_url;
      const provider = new JsonRpcProvider(rpcUrl);
 
 
@@ -42,18 +45,19 @@ export const subscribeToUniSwap = async (data: ITrigger) => {
     const contractAddress = data.contractAddress;
 
     // Listen for Swap events
-    pairContract.on("Swap", (sender, amount0In, amount1In, amount0Out, amount1Out, to, event) => {
-        if (sender.toLowerCase() === contractAddress.toLowerCase() || to.toLowerCase() === contractAddress.toLowerCase()) {
-            console.log(`Swap detected!`);
-            console.log(`Sender: ${sender}`);
-            console.log(`Amount In: Token0: ${amount0In}, Token1: ${amount1In}`);
-            console.log(`Amount Out: Token0: ${amount0Out}, Token1: ${amount1Out}`);
-            console.log(`Recipient: ${to}`);
 
-             //call vilayer
-            const body = {}
-            proover.transferProover("uniswap",JSON.stringify(body));
-        }   
+    return new Promise((resolve, reject) => {
+        try {
+            pairContract.on("Swap", (sender, amount0In, amount1In, amount0Out, amount1Out, to, event) => {
+                if (sender.toLowerCase() === contractAddress.toLowerCase() || to.toLowerCase() === contractAddress.toLowerCase()) 
+                    {
+                    const transactionHash = event.log.transactionHash;
+                    resolve(transactionHash);
+                    }
+            });
+        } catch (error) {
+            reject(error);
+        }
     });
 }
 
@@ -65,7 +69,7 @@ export const subscribeTo1Inch = async (data: ITrigger) => {
          throw new Error(`Invalid network: ${data.network}`);
      }
  
-     const rpcUrl = networkConfig.rpc_url + process.env.rpc_key;
+     const rpcUrl = networkConfig.rpc_url + rpc_url;
      const provider = new JsonRpcProvider(rpcUrl);
 
     // 1inch Aggregation Router address
@@ -83,64 +87,66 @@ export const subscribeTo1Inch = async (data: ITrigger) => {
     const contractAddress = data.contractAddress;
     
     // Listen for swaps involving your contract
-    routerContract.on("Swapped", (sender, srcToken, dstToken, dstReceiver, spentAmount, returnAmount, event) => {
-        if (sender.toLowerCase() === contractAddress.toLowerCase() || dstReceiver.toLowerCase() === contractAddress.toLowerCase()) {
-            console.log(`Swap detected!`);
-            console.log(`Sender: ${sender}`);
-            console.log(`Source Token: ${srcToken}`);
-            console.log(`Destination Token: ${dstToken}`);
-            console.log(`Spent Amount: ${formatUnits(spentAmount)}`);
-            console.log(`Received Amount: ${formatUnits(returnAmount)}`);
-        }
 
-         //call vilayer
-         const body = {}
-         proover.transferProover("1inch_swap",JSON.stringify(body));
+    return new Promise((resolve, reject) => {
+        try {
+            routerContract.on("Swapped", (sender, srcToken, dstToken, dstReceiver, spentAmount, returnAmount, event) => {
+                if (sender.toLowerCase() === contractAddress.toLowerCase() || dstReceiver.toLowerCase() === contractAddress.toLowerCase())
+                    {
+                    const transactionHash = event.log.transactionHash;
+                    resolve(transactionHash);
+                    }
+            });
+        } catch (error) {
+            reject(error);
+        }
     });
 
 }
 
-export const subscribeToTransaction = async (data: ITrigger) => {
-
+export const subscribeToTransaction = async (data: ITrigger): Promise<string> => {
     // Setup provider and contract
-    // Setup provider (replace with your RPC URL)
     const networkConfig = helper.networks.find((row) => row.network === data.network);
-    if (!networkConfig || !networkConfig.factoryAddress) {
+    if (!networkConfig) {
         throw new Error(`Invalid network: ${data.network}`);
     }
 
     const tokenAddress = data.transferData?.token;
-   
     if (!tokenAddress) {
         throw new Error(`Invalid tokenAddress: ${tokenAddress}`);
     }
 
-    
-    const rpcUrl = networkConfig.rpc_url + process.env.rpc_key;
+    const rpcUrl = networkConfig.rpc_url + rpc_url;
     const provider = new JsonRpcProvider(rpcUrl);
-    const tokenContract = new ethers.Contract(tokenAddress, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
+    const tokenContract = new ethers.Contract(
+        tokenAddress,
+        ["event Transfer(address indexed from, address indexed to, uint256 value)"],
+        provider
+    );
 
-    // Listen for Transfer events to your contract
     const contractAddress = data.contractAddress;
 
-    tokenContract.on("Transfer", (from, to, value, event) => {
-    if (to.toLowerCase() === contractAddress.toLowerCase()) {
-        console.log(`Tokens received! From: ${from}, Amount: ${formatUnits(value)}`);
-        
-         //call vilayer
-         const body = {}
-         proover.transactionProover("transaction",JSON.stringify(body));
-    }
+    // Wrap the event listener in a Promise
+    return new Promise((resolve, reject) => {
+        try {
+            tokenContract.on("Transfer", (from, to, value, event) => {
+                if (to.toLowerCase() === contractAddress.toLowerCase()) {
+                    console.log(`Tokens received! From: ${from}, Amount: ${formatUnits(value)}`);
+                    const transactionHash = event.log.transactionHash;
+                    resolve(transactionHash);
+                }
+            });
+        } catch (error) {
+            reject(error);
+        }
     });
-}
+};
 
 export const subscribeToTwitter = async (data: ITrigger) => {
 
     if ( 1 == 1 ) {
 
-         //call vilayer
-         const body = {}
-         proover.transactionProover("twitter",JSON.stringify(body));
+         return  "";
     }
 }
 
